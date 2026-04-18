@@ -66,23 +66,26 @@ export function Scrolltelling() {
       });
 
       // Single ScrollTrigger drives pin, progress state, AND the beat timeline.
-      // Two overlapping ScrollTriggers on the same range previously caused
-      // scrub conflicts and leaked the timeline on unmount.
+      // Transitions are stacked contiguously (each slot = 1 timeline unit) so
+      // the full scroll range is always actively animating — no "dead zones"
+      // where scrolling produces no visual change.
       const tl = gsap.timeline({
         defaults: { ease: 'power2.inOut' },
       });
 
       if (!reduced) {
+        const slot = 1; // one timeline unit per transition
         for (let i = 1; i < BEATS.length; i++) {
           const prev = beatRefs.current[i - 1];
           const next = beatRefs.current[i];
           if (!prev || !next) continue;
-          tl.to(prev, { autoAlpha: 0, y: -40, duration: 0.5 }, i - 1)
+          const pos = (i - 1) * slot;
+          tl.to(prev, { autoAlpha: 0, y: -40, duration: slot }, pos)
             .fromTo(
               next,
               { autoAlpha: 0, y: 40 },
-              { autoAlpha: 1, y: 0, duration: 0.5, ease: 'power2.out' },
-              i - 1,
+              { autoAlpha: 1, y: 0, duration: slot, ease: 'power2.out' },
+              pos,
             );
         }
       }
