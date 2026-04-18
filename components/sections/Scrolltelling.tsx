@@ -59,22 +59,42 @@ export function Scrolltelling() {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     const ctx = gsap.context(() => {
-      // Integrate Lenis with ScrollTrigger (instance exposed by LenisProvider)
-      const lenis = (window as unknown as { __lenis?: { on: (e: string, fn: () => void) => void } }).__lenis;
-      if (lenis) lenis.on('scroll', ScrollTrigger.update);
-
       // Initial states: beats 1..n hidden
       beatRefs.current.forEach((el, i) => {
         if (!el) return;
         gsap.set(el, { autoAlpha: i === 0 ? 1 : 0, y: i === 0 ? 0 : 40 });
       });
 
-      const st = ScrollTrigger.create({
+      // Single ScrollTrigger drives pin, progress state, AND the beat timeline.
+      // Two overlapping ScrollTriggers on the same range previously caused
+      // scrub conflicts and leaked the timeline on unmount.
+      const tl = gsap.timeline({
+        defaults: { ease: 'power2.inOut' },
+      });
+
+      if (!reduced) {
+        for (let i = 1; i < BEATS.length; i++) {
+          const prev = beatRefs.current[i - 1];
+          const next = beatRefs.current[i];
+          if (!prev || !next) continue;
+          tl.to(prev, { autoAlpha: 0, y: -40, duration: 0.5 }, i - 1)
+            .fromTo(
+              next,
+              { autoAlpha: 0, y: 40 },
+              { autoAlpha: 1, y: 0, duration: 0.5, ease: 'power2.out' },
+              i - 1,
+            );
+        }
+      }
+
+      ScrollTrigger.create({
+        animation: reduced ? undefined : tl,
         trigger: container,
         start: 'top top',
         end: () => `+=${window.innerHeight * BEATS.length}`,
         pin: pin,
         scrub: reduced ? false : 0.6,
+        anticipatePin: 1,
         onUpdate: (self) => {
           setProgress(self.progress);
           const idx = Math.min(
@@ -83,40 +103,7 @@ export function Scrolltelling() {
           );
           setActiveBeat(idx);
         },
-        anticipatePin: 1,
       });
-
-      // Cross-fade beats with a master timeline
-      if (!reduced) {
-        const tl = gsap.timeline({
-          scrollTrigger: {
-            trigger: container,
-            start: 'top top',
-            end: () => `+=${window.innerHeight * BEATS.length}`,
-            scrub: 0.6,
-          },
-        });
-
-        for (let i = 1; i < BEATS.length; i++) {
-          const prev = beatRefs.current[i - 1];
-          const next = beatRefs.current[i];
-          if (!prev || !next) continue;
-          tl.to(
-            prev,
-            { autoAlpha: 0, y: -40, duration: 0.5, ease: 'power2.inOut' },
-            i - 1,
-          ).fromTo(
-            next,
-            { autoAlpha: 0, y: 40 },
-            { autoAlpha: 1, y: 0, duration: 0.5, ease: 'power2.out' },
-            i - 1,
-          );
-        }
-      }
-
-      return () => {
-        st.kill();
-      };
     }, container);
 
     return () => ctx.revert();

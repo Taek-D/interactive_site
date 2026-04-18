@@ -1,16 +1,22 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Lenis from 'lenis';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 /**
  * LenisProvider — global smooth-scroll engine.
- * Wires Lenis ticks into requestAnimationFrame so that GSAP ScrollTrigger
- * can use `lenis.scrollTo` / `lenis.on('scroll', ScrollTrigger.update)` downstream.
+ * Integrates Lenis with GSAP's ticker so ScrollTrigger stays in lockstep
+ * with the smooth-scroll position. This is the officially recommended
+ * Lenis + GSAP integration pattern (not a manual rAF loop).
  * Respects prefers-reduced-motion automatically.
  */
 export function LenisProvider({ children }: { children: React.ReactNode }) {
-  const rafIdRef = useRef<number | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
@@ -35,17 +41,26 @@ export function LenisProvider({ children }: { children: React.ReactNode }) {
       infinite: false,
     });
 
-    // Expose the instance for ScrollTrigger integration elsewhere.
+    // Expose instance for any section-level ScrollTrigger wiring.
     (window as unknown as { __lenis?: Lenis }).__lenis = lenis;
 
-    const raf = (time: number) => {
-      lenis.raf(time);
-      rafIdRef.current = requestAnimationFrame(raf);
+    // Sync Lenis scroll events into ScrollTrigger.
+    const onScroll = () => ScrollTrigger.update();
+    lenis.on('scroll', onScroll);
+
+    // Drive Lenis from GSAP's ticker — single source of truth for all animation.
+    const update = (time: number) => {
+      lenis.raf(time * 1000);
     };
-    rafIdRef.current = requestAnimationFrame(raf);
+    gsap.ticker.add(update);
+    gsap.ticker.lagSmoothing(0);
+
+    // Recalculate ScrollTrigger positions after Lenis hooks in.
+    ScrollTrigger.refresh();
 
     return () => {
-      if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+      lenis.off('scroll', onScroll);
+      gsap.ticker.remove(update);
       lenis.destroy();
       delete (window as unknown as { __lenis?: Lenis }).__lenis;
     };

@@ -30,8 +30,18 @@ export function Hero() {
       id="hero"
       className="relative min-h-[100svh] w-full overflow-hidden bg-[color:var(--color-ink-black)]"
     >
-      {/* Layer 1 — Cinematic background still */}
-      <div className="absolute inset-0 opacity-55">
+      {/* Layer 1 — Cinematic still with a slow Ken Burns zoom (feels like a video) */}
+      <motion.div
+        className="absolute inset-0 opacity-55"
+        initial={shouldReduceMotion ? { scale: 1 } : { scale: 1.08 }}
+        animate={shouldReduceMotion ? { scale: 1 } : { scale: 1.18 }}
+        transition={{
+          duration: 22,
+          ease: 'linear',
+          repeat: Infinity,
+          repeatType: 'reverse',
+        }}
+      >
         <Image
           src="https://images.unsplash.com/photo-1520170350707-b2da59970118?auto=format&fit=crop&w=2400&q=80"
           alt=""
@@ -40,7 +50,7 @@ export function Hero() {
           className="object-cover"
           sizes="100vw"
         />
-      </div>
+      </motion.div>
       <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black pointer-events-none" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0)_0%,rgba(0,0,0,0.85)_85%)] pointer-events-none" />
 

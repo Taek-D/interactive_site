@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://soundstage.studio/sitemap.xml

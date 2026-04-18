@@ -5,6 +5,7 @@ import { LenisProvider } from '@/components/providers/LenisProvider';
 import { NavBar } from '@/components/ui/NavBar';
 import { CursorTrail } from '@/components/ui/CursorTrail';
 import { PageTransition } from '@/components/ui/PageTransition';
+import { ScrollProgress } from '@/components/ui/ScrollProgress';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -62,6 +63,7 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${geistMono.variable}`}>
       <body className="bg-[color:var(--color-ink-black)] text-[color:var(--color-text-primary)] antialiased">
         <LenisProvider>
+          <ScrollProgress />
           <CursorTrail />
           <NavBar />
           <PageTransition>{children}</PageTransition>

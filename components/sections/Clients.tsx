@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, useInView, useReducedMotion } from 'framer-motion';
 
 const CLIENTS = [
@@ -74,19 +74,61 @@ export function Clients() {
 
         <div className="mt-16 grid grid-cols-2 gap-4 lg:mt-24 lg:grid-cols-4 lg:gap-8">
           {METRICS.map((m, i) => (
-            <motion.div
-              key={m.label}
-              initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.8, delay: 0.1 * i, ease: [0.33, 1, 0.68, 1] }}
-              className="flex flex-col gap-2 border-t border-[color:var(--color-border-light)] pt-5"
-            >
-              <span className="font-display-hero text-white tracking-[-0.02em] tabular-nums">{m.n}</span>
-              <span className="font-caption text-[color:var(--color-text-muted)]">{m.label}</span>
-            </motion.div>
+            <MetricCell key={m.label} metric={m} index={i} active={inView} />
           ))}
         </div>
       </div>
     </section>
+  );
+}
+
+type Metric = { n: string; label: string };
+
+/**
+ * MetricCell — counts up from 0 to the target number once the section is in-view.
+ * Preserves non-numeric suffix (e.g., "180+") by splitting target into digits + suffix.
+ * Honors reduced-motion by rendering the final value immediately.
+ */
+function MetricCell({ metric, index, active }: { metric: Metric; index: number; active: boolean }) {
+  const reduced = useReducedMotion();
+  const match = metric.n.match(/^(\d+)(.*)$/);
+  const target = match ? parseInt(match[1] ?? '0', 10) : 0;
+  const suffix = match ? (match[2] ?? '') : '';
+
+  const [value, setValue] = useState(reduced || !match ? target : 0);
+
+  useEffect(() => {
+    if (!active || reduced || !match) {
+      if (reduced) setValue(target);
+      return;
+    }
+    const duration = 1400;
+    const startDelay = index * 120;
+    const start = performance.now() + startDelay;
+    let rafId = 0;
+
+    const tick = (now: number) => {
+      const t = Math.max(0, Math.min(1, (now - start) / duration));
+      const eased = 1 - Math.pow(1 - t, 3); // easeOutCubic
+      setValue(Math.round(target * eased));
+      if (t < 1) rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [active, reduced, target, index, match]);
+
+  return (
+    <motion.div
+      initial={reduced ? { opacity: 0 } : { opacity: 0, y: 20 }}
+      animate={active ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.8, delay: 0.1 * index, ease: [0.33, 1, 0.68, 1] }}
+      className="flex flex-col gap-2 border-t border-[color:var(--color-border-light)] pt-5"
+    >
+      <span className="font-display-hero text-white tracking-[-0.02em] tabular-nums">
+        {match ? value : metric.n}
+        {suffix}
+      </span>
+      <span className="font-caption text-[color:var(--color-text-muted)]">{metric.label}</span>
+    </motion.div>
   );
 }
