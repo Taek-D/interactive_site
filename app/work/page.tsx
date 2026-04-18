@@ -67,7 +67,8 @@ export default function WorkIndexPage() {
                   ? 'aspect-[16/10]'
                   : item.aspect === 'square'
                     ? 'aspect-square'
-                    : 'aspect-[21/9]';
+                    // 21/9 is too flat on phones; only apply at lg+
+                    : 'aspect-[16/10] lg:aspect-[21/9]';
 
             return (
               <motion.li

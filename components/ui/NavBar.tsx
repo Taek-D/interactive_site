@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 
@@ -16,6 +17,16 @@ export function NavBar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
+  const pathname = usePathname();
+
+  // A nav link is "active" when its href targets the current route.
+  // Hash links (e.g. /#services) are home-page anchors and do NOT receive
+  // a persistent active state — only real routes (/, /work, /work/[slug]) do.
+  const isActive = (href: string) => {
+    if (href.startsWith('/#')) return false;
+    if (href === '/') return pathname === '/';
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 16);
@@ -60,16 +71,31 @@ export function NavBar() {
           </Link>
 
           <ul className="hidden lg:flex items-center gap-8">
-            {NAV_LINKS.map((link) => (
-              <li key={link.href}>
-                <Link
-                  href={link.href}
-                  className="font-nav text-[color:var(--color-text-secondary)] hover:text-white transition-colors"
-                >
-                  {link.label}
-                </Link>
-              </li>
-            ))}
+            {NAV_LINKS.map((link) => {
+              const active = isActive(link.href);
+              return (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    aria-current={active ? 'page' : undefined}
+                    className={[
+                      'font-nav transition-colors relative inline-flex items-center',
+                      active
+                        ? 'text-white'
+                        : 'text-[color:var(--color-text-secondary)] hover:text-white',
+                    ].join(' ')}
+                  >
+                    {link.label}
+                    {active ? (
+                      <span
+                        aria-hidden="true"
+                        className="absolute -bottom-1.5 left-0 right-0 h-px bg-[color:var(--color-accent-warm)]"
+                      />
+                    ) : null}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
 
           <div className="hidden lg:flex items-center gap-3">
@@ -110,22 +136,29 @@ export function NavBar() {
             className="fixed inset-0 z-40 lg:hidden bg-black/95 backdrop-blur-xl pt-[72px]"
           >
             <ul className="flex flex-col gap-2 px-6 py-10">
-              {NAV_LINKS.map((link, i) => (
-                <motion.li
-                  key={link.href}
-                  initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.05 * i, duration: 0.35, ease: [0.33, 1, 0.68, 1] }}
-                >
-                  <Link
-                    href={link.href}
-                    onClick={() => setMobileOpen(false)}
-                    className="font-display-hero text-white block py-3"
+              {NAV_LINKS.map((link, i) => {
+                const active = isActive(link.href);
+                return (
+                  <motion.li
+                    key={link.href}
+                    initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.05 * i, duration: 0.35, ease: [0.33, 1, 0.68, 1] }}
                   >
-                    {link.label}
-                  </Link>
-                </motion.li>
-              ))}
+                    <Link
+                      href={link.href}
+                      onClick={() => setMobileOpen(false)}
+                      aria-current={active ? 'page' : undefined}
+                      className={[
+                        'font-display-hero block py-3 transition-colors',
+                        active ? 'text-[color:var(--color-accent-warm)]' : 'text-white',
+                      ].join(' ')}
+                    >
+                      {link.label}
+                    </Link>
+                  </motion.li>
+                );
+              })}
               <motion.li
                 initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}

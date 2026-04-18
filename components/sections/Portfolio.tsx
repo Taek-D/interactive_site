@@ -7,11 +7,15 @@ import { motion, useInView, useReducedMotion } from 'framer-motion';
 import { PORTFOLIO } from '@/lib/portfolio';
 import type { PortfolioItem } from '@/lib/portfolio';
 
+// Mobile-first aspect ratios. The `wide` 21/9 cinemascope is too flat
+// on phones (text under it gets squeezed against the next card), so we
+// fall back to 16/10 below `lg` and only honour 21/9 on desktop where
+// the layout has room to breathe.
 const ASPECT_CLASSES: Record<PortfolioItem['aspect'], string> = {
   portrait: 'aspect-[3/4]',
   landscape: 'aspect-[16/10]',
   square: 'aspect-square',
-  wide: 'aspect-[21/9]',
+  wide: 'aspect-[16/10] lg:aspect-[21/9]',
 };
 
 const GRID_CLASSES: Record<string, string> = {

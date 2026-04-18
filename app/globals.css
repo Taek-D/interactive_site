@@ -84,14 +84,16 @@
     color: var(--color-ink-black);
   }
 
-  /* Hide native focus outline, use custom ring on :focus-visible */
+  /* Hide native focus outline, use custom ring on :focus-visible.
+   * NOTE: do NOT force border-radius — it would square off pill buttons
+   * (radius 9999px) and large cards (radius 20px). The ring inherits
+   * the element's own border-radius. */
   *:focus { outline: none; }
   *:focus-visible {
     outline: none;
     box-shadow:
       var(--color-ring-focus) 0 0 0 2px,
       var(--color-ink-black) 0 0 0 4px;
-    border-radius: 4px;
   }
 
   a { color: inherit; text-decoration: none; }

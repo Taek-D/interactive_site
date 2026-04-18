@@ -67,7 +67,7 @@ export function Contact() {
                       {row.label}
                     </span>
                     <span
-                      className="col-span-11 sm:col-span-8 text-white tracking-[-0.02em] leading-[1.05] group-hover:text-[color:var(--color-accent-warm)] transition-colors font-light"
+                      className="col-span-10 sm:col-span-8 text-white tracking-[-0.02em] leading-[1.05] group-hover:text-[color:var(--color-accent-warm)] transition-colors font-light"
                       style={{
                         fontFamily: 'var(--font-body)',
                         fontSize: 'clamp(22px, 2.6vw, 44px)',
@@ -77,7 +77,7 @@ export function Contact() {
                     >
                       {row.value}
                     </span>
-                    <span className="col-span-1 flex justify-end text-white/60 group-hover:text-white transition-colors">
+                    <span className="col-span-2 sm:col-span-1 flex justify-end text-white/60 group-hover:text-white transition-colors">
                       <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
                         <path
                           d="M5 5 L17 5 L17 17 M17 5 L5 17"

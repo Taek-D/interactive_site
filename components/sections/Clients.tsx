@@ -58,19 +58,24 @@ export function Clients() {
           </p>
         </motion.div>
 
-        <div className="mt-14 grid grid-cols-2 gap-px overflow-hidden rounded-[var(--radius-section)] border border-[color:var(--color-border-subtle)] sm:grid-cols-3 lg:grid-cols-4">
+        {/* Client wall — semantically a list (these are static brand mentions,
+         * not buttons). The hover brightening is a non-interactive delight. */}
+        <ul
+          aria-label="Selected clients"
+          className="mt-14 grid grid-cols-2 gap-px overflow-hidden rounded-[var(--radius-section)] border border-[color:var(--color-border-subtle)] sm:grid-cols-3 lg:grid-cols-4"
+        >
           {CLIENTS.map((name, i) => (
-            <motion.div
+            <motion.li
               key={name}
               initial={{ opacity: 0 }}
               animate={inView ? { opacity: 1 } : {}}
               transition={{ duration: 0.7, delay: 0.05 * i }}
-              className="flex aspect-[2/1] items-center justify-center bg-[color:var(--color-ink-black)] px-4 py-10 font-button-uppercase text-[11px] tracking-[0.22em] text-[color:var(--color-text-secondary)] hover:text-white transition-colors select-none"
+              className="flex aspect-[2/1] items-center justify-center bg-[color:var(--color-ink-black)] px-4 py-10 font-button-uppercase text-[11px] tracking-[0.22em] text-[color:var(--color-text-secondary)] transition-colors select-none hover:text-white"
             >
               {name}
-            </motion.div>
+            </motion.li>
           ))}
-        </div>
+        </ul>
 
         <div className="mt-16 grid grid-cols-2 gap-4 lg:mt-24 lg:grid-cols-4 lg:gap-8">
           {METRICS.map((m, i) => (

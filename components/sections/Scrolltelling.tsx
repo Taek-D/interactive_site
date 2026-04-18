@@ -155,7 +155,7 @@ export function Scrolltelling() {
             </div>
           </div>
 
-          <div className="relative mt-auto max-w-[900px]">
+          <div className="relative mt-auto mb-6 sm:mb-8 max-w-[900px]">
             {BEATS.map((beat, i) => (
               <div
                 key={beat.index}
@@ -164,25 +164,28 @@ export function Scrolltelling() {
                 }}
                 className="absolute inset-x-0 bottom-0"
               >
-                <div className="font-mono-code text-[color:var(--color-text-muted)] mb-6">
+                <div className="font-mono-code text-[color:var(--color-text-muted)] mb-4 sm:mb-6">
                   {beat.index}
                 </div>
                 <h2 className="font-display-hero text-white whitespace-pre-line max-w-[22ch]">
                   {beat.headline}
                 </h2>
-                <p className="mt-8 font-body max-w-[52ch] text-[color:var(--color-text-secondary)]">
+                <p className="mt-5 sm:mt-8 font-body max-w-[52ch] text-[color:var(--color-text-secondary)]">
                   {beat.body}
                 </p>
               </div>
             ))}
-            {/* Spacer to reserve height so absolute beats don't collapse layout */}
-            <div className="invisible">
-              <div className="font-mono-code mb-6">00 / 00</div>
+            {/* Spacer reserves height so absolute beats don't collapse layout.
+             * Use the LONGEST beat body so mobile small viewports always have
+             * enough vertical room — otherwise text would slide under the
+             * AudioWaveform on narrow phones. */}
+            <div className="invisible" aria-hidden="true">
+              <div className="font-mono-code mb-4 sm:mb-6">00 / 00</div>
               <h2 className="font-display-hero whitespace-pre-line max-w-[22ch]">
                 {'Placeholder headline\nwith two lines reserved.'}
               </h2>
-              <p className="mt-8 font-body max-w-[52ch]">
-                {BEATS[0]?.body}
+              <p className="mt-5 sm:mt-8 font-body max-w-[52ch]">
+                {BEATS.reduce((longest, b) => (b.body.length > longest.length ? b.body : longest), '')}
               </p>
             </div>
           </div>
