@@ -1,0 +1,284 @@
+@import "tailwindcss";
+
+/* ============================================================
+ * DESIGN.md — Dark Mode Adaptation
+ * Single source of truth for colors, typography, spacing, effects.
+ * See DESIGN.md in project root for full documentation.
+ * ============================================================ */
+
+@theme {
+  /* --- Color Tokens --- */
+  --color-ink-black: #000000;
+  --color-ink-obsidian: #0a0908;
+  --color-ink-warm: #14110d;
+
+  --color-text-primary: #ffffff;
+  --color-text-secondary: rgba(255, 255, 255, 0.78);
+  --color-text-muted: rgba(255, 255, 255, 0.50);
+  --color-text-whisper: rgba(255, 255, 255, 0.28);
+
+  --color-accent-warm: #f5f2ef;
+  --color-accent-warm-translucent: rgba(245, 242, 239, 0.92);
+
+  --color-waveform-cyan: rgba(127, 255, 255, 0.22);
+  --color-ring-focus: rgba(147, 197, 253, 0.55);
+
+  --color-border-light: rgba(255, 255, 255, 0.08);
+  --color-border-subtle: rgba(255, 255, 255, 0.04);
+
+  /* --- Font Families --- */
+  --font-display: "Inter", "Neue Haas Grotesk Display", "Helvetica Neue", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* --- Radius Scale --- */
+  --radius-minimal: 2px;
+  --radius-subtle: 4px;
+  --radius-standard: 8px;
+  --radius-comfortable: 12px;
+  --radius-card: 16px;
+  --radius-large: 20px;
+  --radius-section: 24px;
+  --radius-warm: 30px;
+  --radius-pill: 9999px;
+
+  /* --- Shadow Tokens (Luminous Rims) --- */
+  --shadow-inset-rim: rgba(255, 255, 255, 0.06) 0px 0px 0px 0.5px inset;
+  --shadow-inset-strong: rgba(255, 255, 255, 0.10) 0px 0px 0px 0.5px inset;
+  --shadow-outline-glow: rgba(255, 255, 255, 0.05) 0px 0px 0px 1px;
+  --shadow-soft-halo: rgba(255, 255, 255, 0.04) 0px 4px 18px;
+  --shadow-card-halo: rgba(0, 0, 0, 0.8) 0px 1px 2px, rgba(255, 255, 255, 0.04) 0px 8px 24px;
+  --shadow-warm-halo: rgba(255, 248, 235, 0.06) 0px 8px 28px;
+  --shadow-edge-highlight: rgba(255, 255, 255, 0.08) 0px 0px 0px 0.5px;
+  --shadow-inset-hairline: rgba(255, 255, 255, 0.10) 0px 0px 0px 1px inset;
+
+  /* --- Spacing extension (8px base, cinematic) --- */
+  --spacing-section-sm: 96px;
+  --spacing-section-md: 128px;
+  --spacing-section-lg: 192px;
+}
+
+/* --- Base reset + global tone --- */
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html, body {
+    background-color: var(--color-ink-black);
+    color: var(--color-text-primary);
+    font-family: var(--font-body);
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    letter-spacing: 0.01em;
+  }
+
+  html {
+    scroll-behavior: auto; /* Lenis drives smooth scroll */
+  }
+
+  ::selection {
+    background: var(--color-accent-warm-translucent);
+    color: var(--color-ink-black);
+  }
+
+  /* Hide native focus outline, use custom ring on :focus-visible */
+  *:focus { outline: none; }
+  *:focus-visible {
+    outline: none;
+    box-shadow:
+      var(--color-ring-focus) 0 0 0 2px,
+      var(--color-ink-black) 0 0 0 4px;
+    border-radius: 4px;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  /* Hairline scrollbar (desktop) */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 9999px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+}
+
+/* --- Typography utilities --- */
+@layer utilities {
+  .font-display-mega {
+    font-family: var(--font-display);
+    font-weight: 100;
+    font-size: clamp(64px, 10vw, 180px);
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+  }
+  .font-display-hero {
+    font-family: var(--font-display);
+    font-weight: 200;
+    font-size: clamp(48px, 6vw, 96px);
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+  }
+  .font-section-heading {
+    font-family: var(--font-display);
+    font-weight: 300;
+    font-size: clamp(36px, 4vw, 64px);
+    line-height: 1.10;
+    letter-spacing: -0.02em;
+  }
+  .font-card-heading {
+    font-family: var(--font-display);
+    font-weight: 300;
+    font-size: 2rem;
+    line-height: 1.13;
+    letter-spacing: -0.01em;
+  }
+  .font-body-large {
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-size: 1.25rem;
+    line-height: 1.40;
+    letter-spacing: 0.18px;
+  }
+  .font-body {
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-size: 1.125rem;
+    line-height: 1.55;
+    letter-spacing: 0.18px;
+  }
+  .font-body-standard {
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-size: 1rem;
+    line-height: 1.55;
+    letter-spacing: 0.16px;
+  }
+  .font-nav {
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 0.9375rem;
+    line-height: 1.40;
+    letter-spacing: 0.15px;
+  }
+  .font-button-uppercase {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.8125rem;
+    line-height: 1.10;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .font-caption {
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 0.875rem;
+    line-height: 1.50;
+    letter-spacing: 0.14px;
+  }
+  .font-micro {
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 0.75rem;
+    line-height: 1.33;
+    letter-spacing: 0.08em;
+  }
+  .font-mono-code {
+    font-family: var(--font-mono);
+    font-weight: 400;
+    font-size: 0.8125rem;
+    line-height: 1.85;
+  }
+}
+
+/* --- Component-like utilities (rim lights, pills) --- */
+@layer components {
+  .btn-pill-white {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: var(--radius-pill);
+    background: #ffffff;
+    color: #000000;
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 0.9375rem;
+    letter-spacing: 0.02em;
+    transition: transform 200ms cubic-bezier(0.33, 1, 0.68, 1), box-shadow 200ms cubic-bezier(0.33, 1, 0.68, 1);
+    cursor: pointer;
+  }
+  .btn-pill-white:hover {
+    box-shadow: rgba(255, 255, 255, 0.2) 0 0 0 4px;
+  }
+
+  .btn-pill-obsidian {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: var(--radius-pill);
+    background: var(--color-ink-obsidian);
+    color: #ffffff;
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 0.9375rem;
+    letter-spacing: 0.02em;
+    box-shadow:
+      rgba(255, 255, 255, 0.08) 0 0 0 1px,
+      rgba(0, 0, 0, 0.6) 0 4px 16px;
+    transition: box-shadow 200ms cubic-bezier(0.33, 1, 0.68, 1);
+    cursor: pointer;
+  }
+  .btn-pill-obsidian:hover {
+    box-shadow:
+      rgba(255, 255, 255, 0.16) 0 0 0 1px,
+      rgba(0, 0, 0, 0.8) 0 4px 20px;
+  }
+
+  .btn-pill-warm {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 20px 12px 14px;
+    border-radius: var(--radius-warm);
+    background: var(--color-accent-warm-translucent);
+    color: #000000;
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 0.9375rem;
+    letter-spacing: 0.02em;
+    box-shadow: var(--shadow-warm-halo);
+    transition: box-shadow 300ms cubic-bezier(0.33, 1, 0.68, 1), transform 300ms cubic-bezier(0.33, 1, 0.68, 1);
+    cursor: pointer;
+  }
+  .btn-pill-warm:hover {
+    box-shadow: rgba(255, 248, 235, 0.12) 0 10px 36px;
+  }
+
+  .card-obsidian {
+    background: var(--color-ink-obsidian);
+    border-radius: var(--radius-large);
+    box-shadow:
+      var(--shadow-outline-glow),
+      rgba(0, 0, 0, 0.8) 0 1px 2px,
+      rgba(255, 255, 255, 0.04) 0 8px 24px;
+  }
+
+  .rim-inset { box-shadow: var(--shadow-inset-rim); }
+  .rim-outline { box-shadow: var(--shadow-outline-glow); }
+  .rim-halo { box-shadow: var(--shadow-soft-halo); }
+}
+
+/* --- prefers-reduced-motion: full fallback --- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
