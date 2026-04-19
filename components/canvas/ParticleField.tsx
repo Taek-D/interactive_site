@@ -192,7 +192,16 @@ export default function ParticleField({
       renderer.render(scene, camera);
       if (!reducedMotion) rafId = requestAnimationFrame(animate);
     };
-    animate();
+
+    if (reducedMotion) {
+      // Pre-tilt the cloud so the single static frame reads as volumetric.
+      // Without this the points render on-axis and the sphere collapses
+      // into a flat disk.
+      points.rotation.set(0.12, 0.42, 0);
+      renderer.render(scene, camera);
+    } else {
+      animate();
+    }
 
     // Lose-context guard for aggressive tab switching
     const gl = renderer.getContext();

@@ -208,7 +208,23 @@ export default function Scene3D({ className, progress = 0 }: Props) {
       renderer.render(scene, camera);
       if (!reduced) rafId = requestAnimationFrame(tick);
     };
-    tick();
+
+    if (reduced) {
+      // Paint a single "developed" frame: inject a non-zero uTime so FBM
+      // noise has resolved into an interesting surface, and pre-rotate
+      // the meshes so the sphere is viewed off-axis. Without this the
+      // reduced-motion user would see a dead-on, time-zero silhouette
+      // — technically correct but visually flat.
+      solidUTime.value = 0.9;
+      wireUTime.value = 0.9;
+      solidUProgress.value = 0.2;
+      wireUProgress.value = 0.2;
+      mesh.rotation.set(0.18, 0.55, 0);
+      wireMesh.rotation.set(0.2, 0.54, 0);
+      renderer.render(scene, camera);
+    } else {
+      tick();
+    }
 
     const gl = renderer.getContext();
     const loseExt = gl.getExtension('WEBGL_lose_context');

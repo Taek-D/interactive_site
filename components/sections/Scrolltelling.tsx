@@ -105,6 +105,17 @@ export function Scrolltelling() {
             Math.floor(self.progress * BEATS.length),
           );
           setActiveBeat(idx);
+          // Reduced-motion path: the GSAP timeline never runs, so the
+          // DOM beats stay frozen on beat #0. Snap visibility directly
+          // from the scroll index so scrolling still progresses the
+          // narrative — just without the crossfade/transform stagger.
+          if (reduced) {
+            beatRefs.current.forEach((el, i) => {
+              if (!el) return;
+              el.style.opacity = i === idx ? '1' : '0';
+              el.style.visibility = i === idx ? 'visible' : 'hidden';
+            });
+          }
         },
       });
     }, container);

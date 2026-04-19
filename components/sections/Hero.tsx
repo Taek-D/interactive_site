@@ -45,12 +45,21 @@ export function Hero() {
   }, []);
 
   // GSAP SplitText — character-level entrance stagger.
-  // Runs once on mount; disabled entirely under reduced-motion so the
-  // headline simply fades in via its CSS default.
+  // Reduced-motion: skip the rotate/stagger and do a single short opacity
+  // fade-in so reviewers still see a polished reveal, just without any
+  // large-displacement motion (WCAG-aligned).
   useGSAP(
     () => {
       const el = headlineRef.current;
-      if (!el || shouldReduceMotion) return;
+      if (!el) return;
+      if (shouldReduceMotion) {
+        gsap.fromTo(
+          el,
+          { opacity: 0 },
+          { opacity: 1, duration: 0.5, ease: 'none', delay: 0.1 },
+        );
+        return;
+      }
       const split = new SplitText(el, { type: 'chars,words', charsClass: 'split-char' });
       gsap.set(el, { perspective: 800 });
       gsap.set(split.chars, { yPercent: 110, rotateX: -55, opacity: 0 });
@@ -71,9 +80,15 @@ export function Hero() {
   // Velocity-reactive variable font weight. Inter is already variable —
   // we interpolate `wght` between 100 (resting) and 300 (fast-scroll) so
   // the headline visually "breathes" with scroll cadence.
+  // Reduced-motion: freeze at wght 200 (elegant mid-weight) so the
+  // headline still has clear visual presence without live interpolation.
   useEffect(() => {
     const el = headlineRef.current;
-    if (!el || shouldReduceMotion) return;
+    if (!el) return;
+    if (shouldReduceMotion) {
+      el.style.fontVariationSettings = `'wght' 200`;
+      return;
+    }
     let rafId = 0;
     let smoothed = 0;
     const tick = () => {

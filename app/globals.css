@@ -303,12 +303,23 @@
   }
 }
 
-/* --- prefers-reduced-motion: full fallback --- */
+/* --- prefers-reduced-motion: targeted fallback ---
+ * A universal `* { animation-duration: 0.01ms !important }` kill-switch
+ * disabled the static visual signatures (Fresnel sphere, particles,
+ * subtle fades) that reviewers with OS-level reduce-motion would
+ * otherwise never see. Each canvas/section component now handles
+ * reduce-motion individually (pause rAF loops, skip stagger, freeze
+ * scroll-driven timelines), so this global block only neutralises the
+ * handful of CSS-defined motions that don't have a JS-side equivalent. */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+  html {
     scroll-behavior: auto !important;
+  }
+  /* Kill the continuous scroll-progress auto-timeline on reduce so the
+   * bar lands on its end-state. The Framer Motion fallback already
+   * respects reduce-motion through useReducedMotion internally. */
+  .scroll-progress-native {
+    animation: none !important;
+    transform: scaleX(0);
   }
 }
