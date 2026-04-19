@@ -4,18 +4,37 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, useReducedMotion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
+import { SplitText } from 'gsap/SplitText';
 import { AudioWaveform } from '@/components/canvas/AudioWaveform';
 import { ParticleFieldFallback } from '@/components/canvas/ParticleFieldFallback';
+import { readScrollVelocity } from '@/components/canvas/useScrollVelocity';
 
 const ParticleField = dynamic(() => import('@/components/canvas/ParticleField'), {
   ssr: false,
   loading: () => <ParticleFieldFallback className="absolute inset-0 h-full w-full" />,
 });
 
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(SplitText);
+}
+
+// Unsplash Ken-Burns still is the production default. To enable a looping
+// cinematic background, drop any .mp4 into `public/video/hero.mp4` and
+// set `HERO_VIDEO_SRC = '/video/hero.mp4'`. External CDN hotlinks
+// (Pexels / Coverr / Mixkit) routinely 403 on referrer, so the video
+// path is opt-in once a trusted source is wired in.
+const HERO_POSTER =
+  'https://images.unsplash.com/photo-1520170350707-b2da59970118?auto=format&fit=crop&w=2400&q=80';
+const HERO_VIDEO_SRC = '';
+
 export function Hero() {
   const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
+  const [videoAvailable, setVideoAvailable] = useState(true);
   const shouldReduceMotion = useReducedMotion();
+  const headlineRef = useRef<HTMLHeadingElement | null>(null);
 
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 768px) and (pointer: fine)');
@@ -25,16 +44,62 @@ export function Hero() {
     return () => mq.removeEventListener('change', update);
   }, []);
 
+  // GSAP SplitText — character-level entrance stagger.
+  // Runs once on mount; disabled entirely under reduced-motion so the
+  // headline simply fades in via its CSS default.
+  useGSAP(
+    () => {
+      const el = headlineRef.current;
+      if (!el || shouldReduceMotion) return;
+      const split = new SplitText(el, { type: 'chars,words', charsClass: 'split-char' });
+      gsap.set(el, { perspective: 800 });
+      gsap.set(split.chars, { yPercent: 110, rotateX: -55, opacity: 0 });
+      gsap.to(split.chars, {
+        yPercent: 0,
+        rotateX: 0,
+        opacity: 1,
+        duration: 1.1,
+        ease: 'power3.out',
+        stagger: 0.022,
+        delay: 0.15,
+      });
+      return () => split.revert();
+    },
+    { scope: headlineRef, dependencies: [shouldReduceMotion] },
+  );
+
+  // Velocity-reactive variable font weight. Inter is already variable —
+  // we interpolate `wght` between 100 (resting) and 300 (fast-scroll) so
+  // the headline visually "breathes" with scroll cadence.
+  useEffect(() => {
+    const el = headlineRef.current;
+    if (!el || shouldReduceMotion) return;
+    let rafId = 0;
+    let smoothed = 0;
+    const tick = () => {
+      const v = Math.abs(readScrollVelocity());
+      smoothed += (v - smoothed) * 0.14;
+      const w = Math.max(100, Math.min(300, 100 + smoothed * 4.5));
+      el.style.fontVariationSettings = `'wght' ${w.toFixed(0)}`;
+      rafId = requestAnimationFrame(tick);
+    };
+    tick();
+    return () => cancelAnimationFrame(rafId);
+  }, [shouldReduceMotion]);
+
   return (
     <section
       id="hero"
       className="relative min-h-[100svh] w-full overflow-hidden bg-[color:var(--color-ink-black)]"
     >
-      {/* Layer 1 — Cinematic still with a slow Ken Burns zoom (feels like a video) */}
+      {/* Layer 1 — Cinematic still (Unsplash) as the always-present baseline,
+          with an optional stock-video overlay that plays on top when the
+          external CDN allows hotlinking. The video hides itself via onError
+          if the source 403s, leaving the Ken-Burns image in place. */}
       <motion.div
         className="absolute inset-0 opacity-55"
-        initial={shouldReduceMotion ? { scale: 1 } : { scale: 1.08 }}
-        animate={shouldReduceMotion ? { scale: 1 } : { scale: 1.18 }}
+        initial={shouldReduceMotion ? { scale: 1 } : { scale: 1.04 }}
+        animate={shouldReduceMotion ? { scale: 1 } : { scale: 1.12 }}
         transition={{
           duration: 22,
           ease: 'linear',
@@ -43,13 +108,27 @@ export function Hero() {
         }}
       >
         <Image
-          src="https://images.unsplash.com/photo-1520170350707-b2da59970118?auto=format&fit=crop&w=2400&q=80"
+          src={HERO_POSTER}
           alt=""
           fill
           priority
           className="object-cover"
           sizes="100vw"
         />
+        {HERO_VIDEO_SRC && !shouldReduceMotion && videoAvailable ? (
+          <video
+            className="absolute inset-0 h-full w-full object-cover"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            aria-hidden="true"
+            onError={() => setVideoAvailable(false)}
+          >
+            <source src={HERO_VIDEO_SRC} type="video/mp4" />
+          </video>
+        ) : null}
       </motion.div>
       <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black pointer-events-none" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0)_0%,rgba(0,0,0,0.85)_85%)] pointer-events-none" />
@@ -71,14 +150,13 @@ export function Hero() {
         </div>
 
         <div className="flex flex-col gap-10 lg:gap-14">
-          <motion.h1
-            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.2, ease: [0.33, 1, 0.68, 1], delay: 0.1 }}
+          <h1
+            ref={headlineRef}
             className="font-display-mega text-white max-w-[18ch]"
+            style={{ fontVariationSettings: "'wght' 100" }}
           >
             Sound that travels the world.
-          </motion.h1>
+          </h1>
 
           <div className="flex flex-col-reverse lg:flex-row lg:items-end lg:justify-between gap-10">
             <motion.p

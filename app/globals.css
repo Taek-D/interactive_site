@@ -275,6 +275,34 @@
   .rim-halo { box-shadow: var(--shadow-soft-halo); }
 }
 
+/* --- SplitText character baseline ---
+ * GSAP SplitText wraps characters in spans; we guarantee GPU-ready
+ * transforms by forcing inline-block + will-change on the generated
+ * spans. Keeps the rotateX/yPercent reveal perfectly flicker-free. */
+.split-char {
+  display: inline-block;
+  will-change: transform, opacity;
+  transform-origin: 50% 100%;
+  backface-visibility: hidden;
+}
+
+/* --- CSS-native scroll progress (progressive enhancement) ---
+ * Chromium 115+ ships `animation-timeline: scroll()` — driving the
+ * top-of-page progress bar directly from the scroller with zero JS.
+ * ScrollProgress.tsx feature-detects and applies this class only
+ * when supported; the Framer Motion path remains the fallback. */
+@supports (animation-timeline: scroll()) {
+  .scroll-progress-native {
+    transform-origin: left center;
+    animation: scroll-progress-anim linear both;
+    animation-timeline: scroll(root);
+  }
+  @keyframes scroll-progress-anim {
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(1); }
+  }
+}
+
 /* --- prefers-reduced-motion: full fallback --- */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

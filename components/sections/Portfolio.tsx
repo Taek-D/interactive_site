@@ -1,11 +1,20 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRef, useState } from 'react';
 import { motion, useInView, useReducedMotion } from 'framer-motion';
 import { PORTFOLIO } from '@/lib/portfolio';
 import type { PortfolioItem } from '@/lib/portfolio';
+
+// Lazy-loaded + client-only: HoverShader mounts a WebGL context, so we only
+// import it when it actually matters. One extra context per hovered card —
+// browsers allow 8–16 concurrent so this is well within budget.
+const HoverShader = dynamic(
+  () => import('@/components/canvas/HoverShader').then((m) => m.HoverShader),
+  { ssr: false },
+);
 
 // Mobile-first aspect ratios. The `wide` 21/9 cinemascope is too flat
 // on phones (text under it gets squeezed against the next card), so we
@@ -139,6 +148,17 @@ function PortfolioCard({ item, index }: { item: PortfolioItem; index: number }) 
             >
               <source src={item.video} type="video/mp4" />
             </video>
+          ) : null}
+
+          {/* WebGL hover distortion — mounted only while hovered so idle
+           * cards cost zero GPU time. Acts as the "procedural video"
+           * surrogate since lib/portfolio.ts has no real .mp4 sources. */}
+          {hovered && !shouldReduceMotion && !item.video ? (
+            <HoverShader
+              src={item.poster}
+              active={hovered}
+              className="absolute inset-0 h-full w-full pointer-events-none"
+            />
           ) : null}
 
           <div

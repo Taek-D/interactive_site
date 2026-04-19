@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { readScrollVelocity } from './useScrollVelocity';
 
 type Props = {
   density?: number;
@@ -80,28 +81,54 @@ export default function ParticleField({
     const vertexShader = /* glsl */ `
       attribute float alpha;
       attribute float size;
+      uniform vec2 uMouseWorld;
+      uniform float uVelocity;
       varying float vAlpha;
+      varying float vProximity;
       void main() {
+        vec3 pos = position;
+        // Mouse attractor — NDC mouse mapped to a world-space anchor
+        // at the particle cloud's approximate depth. Particles within
+        // the attraction radius drift toward the cursor, giving the
+        // field a volumetric cursor-parallax response.
+        vec3 mouseAnchor = vec3(uMouseWorld, 0.0);
+        vec3 toMouse = mouseAnchor - pos;
+        float dist = length(toMouse);
+        float attract = smoothstep(38.0, 0.0, dist);
+        pos += normalize(toMouse + vec3(1e-5)) * attract * 5.5;
+        vProximity = attract;
         vAlpha = alpha;
-        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-        gl_PointSize = size * (260.0 / -mvPosition.z);
+        vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+        // Velocity-driven size swell — faster scroll → larger, brighter glow.
+        float velocityBoost = 1.0 + clamp(abs(uVelocity) * 0.55, 0.0, 2.2);
+        gl_PointSize = size * velocityBoost * (260.0 / -mvPosition.z);
         gl_Position = projectionMatrix * mvPosition;
       }
     `;
     const fragmentShader = /* glsl */ `
       varying float vAlpha;
+      varying float vProximity;
       uniform float uOpacity;
       void main() {
         vec2 c = gl_PointCoord - vec2(0.5);
         float d = length(c);
         if (d > 0.5) discard;
-        float glow = smoothstep(0.5, 0.0, d);
-        gl_FragColor = vec4(1.0, 1.0, 1.0, glow * vAlpha * uOpacity);
+        // Dual-falloff soft halo — core highlight + outer bloom mimic a
+        // bloom pass without an actual post-processing stage.
+        float core = smoothstep(0.5, 0.0, d);
+        float halo = smoothstep(0.5, 0.15, d);
+        float glow = core * 0.72 + halo * 0.38;
+        float boost = 1.0 + vProximity * 0.9;
+        gl_FragColor = vec4(1.0, 1.0, 1.0, glow * vAlpha * uOpacity * boost);
       }
     `;
 
     const material = new THREE.ShaderMaterial({
-      uniforms: { uOpacity: { value: opacity } },
+      uniforms: {
+        uOpacity: { value: opacity },
+        uMouseWorld: { value: new THREE.Vector2(0, 0) },
+        uVelocity: { value: 0 },
+      },
       vertexShader,
       fragmentShader,
       transparent: true,
@@ -135,11 +162,26 @@ export default function ParticleField({
 
     // Animation loop
     let rafId = 0;
+    let smoothedVelocity = 0;
+    const uMouseWorldUniform = material.uniforms.uMouseWorld as THREE.IUniform<THREE.Vector2>;
+    const uMouseWorld = uMouseWorldUniform.value;
+    const uVelocity = material.uniforms.uVelocity as THREE.IUniform<number>;
     const clock = new THREE.Clock();
     const animate = () => {
       const dt = clock.getDelta();
       mouse.x += (mouseTarget.x - mouse.x) * 0.04;
       mouse.y += (mouseTarget.y - mouse.y) * 0.04;
+
+      // Project NDC mouse to the particle cloud's approximate world plane.
+      // 40 × 25 matches the cloud's sphere volume from lines above.
+      uMouseWorld.x = mouse.x * 40.0;
+      uMouseWorld.y = mouse.y * 25.0;
+
+      // Lenis publishes pixel/frame velocity on window.__lenis.
+      // Smoothing keeps the particle-size response from flickering.
+      const v = readScrollVelocity();
+      smoothedVelocity += (v - smoothedVelocity) * 0.12;
+      uVelocity.value = smoothedVelocity;
 
       if (!reducedMotion) {
         points.rotation.y += rotationSpeed + dt * 0.05;
